@@ -1,0 +1,4 @@
+[    3844ms] [ERROR] Attestation check for Attribution Reporting on https://region1.google-analytics.com failed. @ https://replicate.com/black-forest-labs/flux-2-max/api:0
+[    4265ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://replicate.com/static/dist/status-badge-BE6fL_-z.js:0
+[    4266ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://replicate.com/static/dist/index-Dl_igiok.js:0
+[    4266ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://replicate.com/static/dist/index-CXrwf9DH.js:0

@@ -1,0 +1,4 @@
+[     703ms] [ERROR] Attestation check for Attribution Reporting on https://region1.google-analytics.com failed. @ https://replicate.com/black-forest-labs/flux-2-max:0
+[   16346ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://api.replicate.com/v1/models/black-forest-labs/flux-2-max:0
+[   42458ms] [ERROR] Attestation check for Attribution Reporting on https://region1.google-analytics.com failed. @ https://replicate.com/collections/text-to-image:0
+[   47966ms] [ERROR] Attestation check for Attribution Reporting on https://region1.google-analytics.com failed. @ https://replicate.com/google/nano-banana-pro:0

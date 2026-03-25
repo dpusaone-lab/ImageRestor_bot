@@ -3,9 +3,10 @@ import logging
 from io import BytesIO
 
 from aiogram import Bot, Router
-from aiogram.types import BufferedInputFile, Message
+from aiogram.types import BufferedInputFile, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from services.replicate_api import ReplicateService, ReplicateUpscaleError
+from services.user_db import UserDB
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -14,7 +15,7 @@ _SUPPORTED_MIME = {"image/jpeg", "image/png", "image/webp"}
 
 
 @router.message()
-async def handle_photo(message: Message, bot: Bot, replicate: ReplicateService) -> None:
+async def handle_photo(message: Message, bot: Bot, replicate: ReplicateService, user_db: UserDB, admin_id: int | None) -> None:
     # Prioritize document (uncompressed) over photo (Telegram compresses photos)
     if message.document:
         doc = message.document
@@ -37,6 +38,19 @@ async def handle_photo(message: Message, bot: Bot, replicate: ReplicateService) 
         await message.answer("Пожалуйста, отправьте фотографию или изображение как файл.")
         return
 
+    await user_db.register_user(message.from_user.id, message.from_user.username)
+
+    is_admin = admin_id is not None and message.from_user.id == admin_id
+    if not is_admin and not await user_db.has_free_generations_left(message.from_user.id):
+        kb = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="💳 Пополнить баланс", callback_data="topup_balance")
+        ]])
+        await message.answer(
+            "❌ Бесплатные генерации закончились.\nПополните баланс, чтобы продолжить.",
+            reply_markup=kb,
+        )
+        return
+
     status_msg = await message.answer("⏳ Улучшаю фото...")
 
     try:
@@ -49,6 +63,7 @@ async def handle_photo(message: Message, bot: Bot, replicate: ReplicateService) 
 
         output = BufferedInputFile(result_bytes, filename="upscaled.png")
         await message.answer_document(output, caption="✅ Готово!" + quality_note)
+        await user_db.increment_generations(message.from_user.id)
         logger.info("Sent result to user %d (%d bytes)", message.from_user.id, len(result_bytes))
 
     except ReplicateUpscaleError as e:

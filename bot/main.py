@@ -8,9 +8,10 @@ from aiogram.enums import ParseMode
 from aiogram.types import BotCommand
 
 from config import load_config
-from handlers import photo, start
+from handlers import photo, start, payments
 from middlewares.throttle import ThrottleMiddleware
 from services.replicate_api import ReplicateService
+from services.user_db import UserDB
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,11 +33,18 @@ async def main() -> None:
     )
     dp = Dispatcher()
 
+    user_db = UserDB(db_path=config.db_path, free_limit=config.free_limit)
+    await user_db.setup()
+
     dp["replicate"] = ReplicateService(api_token=config.replicate_api_token, prompt=config.fixed_prompt)
+    dp["user_db"] = user_db
+    dp["free_limit"] = config.free_limit
+    dp["admin_id"] = config.admin_id
 
     photo.router.message.middleware(ThrottleMiddleware())
 
     dp.include_router(start.router)
+    dp.include_router(payments.router)
     dp.include_router(photo.router)
 
     await bot.set_my_commands([
@@ -46,7 +54,11 @@ async def main() -> None:
     ])
 
     logger.info("Starting bot (Replicate API)")
-    await dp.start_polling(bot, skip_updates=True)
+    try:
+        await dp.start_polling(bot, skip_updates=True)
+    finally:
+        await user_db.close()
+        await bot.session.close()
 
 
 if __name__ == "__main__":

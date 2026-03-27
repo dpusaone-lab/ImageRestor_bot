@@ -2,7 +2,7 @@ import asyncio
 import logging
 from io import BytesIO
 
-from aiogram import Bot, Router
+from aiogram import Bot, F, Router
 from aiogram.types import BufferedInputFile, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from services.replicate_api import ReplicateService, ReplicateUpscaleError
@@ -14,7 +14,23 @@ router = Router()
 _SUPPORTED_MIME = {"image/jpeg", "image/png", "image/webp"}
 
 
-@router.message()
+def _progress_bar(filled: int, total: int = 10) -> str:
+    filled = min(filled, total)
+    return "█" * filled + "░" * (total - filled)
+
+
+async def _animate_progress(msg) -> None:
+    for filled in range(1, 10):  # заполняем до 90% за ~63 сек
+        await asyncio.sleep(7)
+        bar = _progress_bar(filled)
+        pct = filled * 10
+        try:
+            await msg.edit_text(f"⏳ Улучшаю фото...\n{bar} {pct}%")
+        except Exception:
+            return
+
+
+@router.message(F.photo | F.document)
 async def handle_photo(message: Message, bot: Bot, replicate: ReplicateService, user_db: UserDB, admin_id: int | None) -> None:
     # Prioritize document (uncompressed) over photo (Telegram compresses photos)
     if message.document:
@@ -51,7 +67,8 @@ async def handle_photo(message: Message, bot: Bot, replicate: ReplicateService, 
         )
         return
 
-    status_msg = await message.answer("⏳ Улучшаю фото...")
+    status_msg = await message.answer("⏳ Улучшаю фото...\n░░░░░░░░░░ 0%")
+    progress_task = asyncio.create_task(_animate_progress(status_msg))
 
     try:
         file = await bot.get_file(file_id)
@@ -75,4 +92,5 @@ async def handle_photo(message: Message, bot: Bot, replicate: ReplicateService, 
         logger.exception("Error processing photo for user %d: %s", message.from_user.id, e)
         await message.answer("❌ Произошла ошибка при обработке фото. Попробуйте ещё раз.")
     finally:
+        progress_task.cancel()
         await status_msg.delete()

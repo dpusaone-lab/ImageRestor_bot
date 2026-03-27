@@ -48,9 +48,7 @@ async def main() -> None:
     dp.include_router(photo.router)
 
     await bot.set_my_commands([
-        BotCommand(command="start",   description="Запустить бота"),
-        BotCommand(command="about",   description="О боте и авторе"),
-        BotCommand(command="example", description="Пример обработки фото"),
+        BotCommand(command="start", description="Запустить бота"),
     ])
 
     logger.info("Starting bot (Replicate API)")

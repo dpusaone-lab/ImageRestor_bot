@@ -1,10 +1,9 @@
 import asyncio
 import logging
+import os
 import ssl
 from logging.handlers import RotatingFileHandler
 
-import certifi
-from aiohttp_socks import ProxyConnector
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
@@ -31,15 +30,7 @@ logger = logging.getLogger(__name__)
 async def main() -> None:
     config = load_config()
 
-    ssl_context = ssl.create_default_context(cafile=certifi.where())
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
-
-    connector = ProxyConnector.from_url(
-        "socks5://72.195.34.42:4145",
-        ssl=ssl_context
-    )
-    proxy_session = AiohttpSession(connector=connector)
+    proxy_session = AiohttpSession(proxy="socks5://72.195.34.42:4145")
     bot = Bot(
         token=config.bot_token,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
@@ -74,4 +65,6 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
+    os.environ["PYTHONHTTPSVERIFY"] = "0"
+    ssl._create_default_https_context = ssl._create_unverified_context
     asyncio.run(main())

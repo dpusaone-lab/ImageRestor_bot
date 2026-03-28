@@ -4,6 +4,7 @@ from logging.handlers import RotatingFileHandler
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.types import BotCommand
 
@@ -27,9 +28,11 @@ logger = logging.getLogger(__name__)
 async def main() -> None:
     config = load_config()
 
+    proxy_session = AiohttpSession(proxy="socks5://72.195.34.42:4145")
     bot = Bot(
         token=config.bot_token,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        session=proxy_session,
     )
     dp = Dispatcher()
 

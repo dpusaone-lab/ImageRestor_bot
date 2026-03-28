@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 async def main() -> None:
     config = load_config()
 
-    proxy_session = AiohttpSession(proxy="socks5://72.195.34.42:4145")
+    proxy_session = AiohttpSession(proxy="socks5://CBgUkE:HDJXN6@168.81.66.7:8000")
     bot = Bot(
         token=config.bot_token,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
